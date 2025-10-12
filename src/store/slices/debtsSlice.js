@@ -1,47 +1,58 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbwa_6RU3gZMvq-Q_Yx8ZJN75hQ4-8FcmGZGwxVj4xwfP3hGD7sHGZCp-2CCPs-Rka0B/exec';
+import { API_URL } from '../../constants/api';
 
-// // Async thunk for fetching data
+// Первый вариант
 // export const fetchDebts = createAsyncThunk(
 //   'debts/fetchDebts',
 //   async (_, { rejectWithValue }) => {
 //     try {
-//       const response = await fetch(API_URL);
+//       // Добавляем timestamp чтобы избежать кэширования браузером
+//       const timestamp = new Date().getTime();
+//       const response = await fetch(`${API_URL}?t=${timestamp}`);
+      
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! status: ${response.status}`);
+//       }
+      
 //       const data = await response.json();
       
 //       if (data.error) {
 //         throw new Error(data.error);
 //       }
       
+//       console.log('✅ Данные успешно загружены:', data.data?.length, 'записей');
 //       return data;
 //     } catch (error) {
+//       console.error('❌ Ошибка загрузки:', error);
 //       return rejectWithValue(error.message);
 //     }
 //   }
 // );
+
 export const fetchDebts = createAsyncThunk(
   'debts/fetchDebts',
-  async (_, { rejectWithValue }) => {
+  async (token, { rejectWithValue }) => {
     try {
-      // Добавляем timestamp чтобы избежать кэширования браузером
-      const timestamp = new Date().getTime();
-      const response = await fetch(`${API_URL}?t=${timestamp}`);
+      console.log('📡 Запрос долгов с токеном:', token);
+      
+      const response = await fetch(`${API_URL}?action=getDebts&token=${encodeURIComponent(token)}&t=${new Date().getTime()}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('📥 Ответ getDebts:', data);
       
-      if (data.error) {
-        throw new Error(data.error);
+      if (!data.success) {
+        throw new Error(data.message);
       }
       
       console.log('✅ Данные успешно загружены:', data.data?.length, 'записей');
       return data;
     } catch (error) {
-      console.error('❌ Ошибка загрузки:', error);
+      console.error('❌ Ошибка загрузки долгов:', error);
       return rejectWithValue(error.message);
     }
   }
